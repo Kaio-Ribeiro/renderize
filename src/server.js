@@ -10,6 +10,17 @@ const path = require('path');
 const config = require('./config');
 const logger = require('./utils/logger');
 
+// Import routes and middleware
+const apiRoutes = require('./routes');
+const { 
+  validateRequest, 
+  requestTimeout, 
+  rateLimit, 
+  errorHandler, 
+  notFoundHandler,
+  requestLogger 
+} = require('./middleware/common');
+
 // Initialize Express app
 const app = express();
 
@@ -22,6 +33,12 @@ app.use(cors({
 
 // Logging middleware
 app.use(morgan(process.env.LOG_FORMAT || 'combined'));
+
+// Request middleware
+app.use(validateRequest);
+app.use(requestTimeout(30000));
+app.use(rateLimit(100, 15 * 60 * 1000)); // 100 requests per 15 minutes
+app.use(requestLogger);
 
 // Body parsing middleware
 app.use(express.json({ limit: '10mb' }));
@@ -48,62 +65,60 @@ app.get('/', (req, res) => {
   });
 });
 
-// Health check endpoint
+// API Routes
+app.use('/v1', apiRoutes);
+
+// Health check endpoint (separate from API versioning)
 app.get('/health', (req, res) => {
   res.json({
     status: 'healthy',
     uptime: process.uptime(),
     timestamp: new Date().toISOString(),
-    memory: process.memoryUsage(),
-    version: process.version
+    memory: {
+      rss: Math.round(process.memoryUsage().rss / 1024 / 1024 * 100) / 100,
+      heapTotal: Math.round(process.memoryUsage().heapTotal / 1024 / 1024 * 100) / 100,
+      heapUsed: Math.round(process.memoryUsage().heapUsed / 1024 / 1024 * 100) / 100,
+      external: Math.round(process.memoryUsage().external / 1024 / 1024 * 100) / 100
+    },
+    version: process.version,
+    environment: process.env.NODE_ENV || 'development'
   });
 });
 
-// Global error handler
-app.use((err, req, res, next) => {
-  logger.error('Unhandled error:', err);
-  
-  res.status(err.status || 500).json({
-    status: 'error',
-    message: process.env.NODE_ENV === 'production' 
-      ? 'Internal server error' 
-      : err.message,
-    ...(process.env.NODE_ENV !== 'production' && { stack: err.stack })
-  });
-});
+// Error handling middleware
+app.use(errorHandler);
 
-// 404 handler
-app.use('*', (req, res) => {
-  res.status(404).json({
-    status: 'error',
-    message: 'Route not found',
-    path: req.originalUrl
-  });
-});
+// 404 handler (must be last)
+app.use('*', notFoundHandler);
 
-// Start server
-const PORT = process.env.PORT || 3000;
-const server = app.listen(PORT, () => {
-  logger.info(`🚀 Renderize API running on port ${PORT}`);
-  logger.info(`📚 API Documentation: http://localhost:${PORT}`);
-  logger.info(`❤️  Health Check: http://localhost:${PORT}/health`);
-});
-
-// Graceful shutdown
-process.on('SIGTERM', () => {
-  logger.info('SIGTERM received, shutting down gracefully');
-  server.close(() => {
-    logger.info('Server closed');
-    process.exit(0);
+// Start server only if not in test environment
+let server;
+if (process.env.NODE_ENV !== 'test') {
+  const PORT = process.env.PORT || 3000;
+  server = app.listen(PORT, () => {
+    logger.info(`🚀 Renderize API running on port ${PORT}`);
+    logger.info(`📚 API Documentation: http://localhost:${PORT}`);
+    logger.info(`❤️  Health Check: http://localhost:${PORT}/health`);
   });
-});
+}
 
-process.on('SIGINT', () => {
-  logger.info('SIGINT received, shutting down gracefully');
-  server.close(() => {
-    logger.info('Server closed');
-    process.exit(0);
+// Graceful shutdown (only if server exists)
+if (server) {
+  process.on('SIGTERM', () => {
+    logger.info('SIGTERM received, shutting down gracefully');
+    server.close(() => {
+      logger.info('Server closed');
+      process.exit(0);
+    });
   });
-});
+
+  process.on('SIGINT', () => {
+    logger.info('SIGINT received, shutting down gracefully');
+    server.close(() => {
+      logger.info('Server closed');
+      process.exit(0);
+    });
+  });
+}
 
 module.exports = app;

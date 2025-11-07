@@ -80,10 +80,24 @@ curl -X POST http://localhost:3000/auth/generate
 curl -H "Authorization: Basic <base64_credentials>" http://localhost:3000/auth/test
 ```
 
+## API Endpoints
+
+### Public Routes
+- `GET /` - API information  
+- `GET /health` - Health check
+- `GET /v1` - API v1 information
+- `GET /v1/status` - API status
+- `GET /v1/auth/*` - Authentication endpoints
+
+### Protected Routes (require Basic Auth)
+- `POST /v1/image` - Convert HTML to image (not implemented yet)
+- `GET /v1/image/info` - Image conversion endpoint information
+
 ## Development Status
 
 ✅ Project structure created  
 ✅ Authentication middleware  
+✅ API routes and error handling  
 ⏳ Image conversion endpoint  
 ⏳ Playwright integration  
 
