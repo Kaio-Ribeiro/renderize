@@ -50,6 +50,30 @@ module.exports = {
     }
   },
 
+  // Jobs Configuration
+  jobs: {
+    cleanup: {
+      enabled: process.env.JOB_CLEANUP_ENABLED !== 'false', // Default enabled
+      schedule: process.env.JOB_CLEANUP_SCHEDULE || '0 2 * * *', // 2 AM daily
+      maxAge: parseInt(process.env.JOB_CLEANUP_MAX_AGE_HOURS) * 60 * 60 * 1000 || 24 * 60 * 60 * 1000 // 24 hours default
+    },
+    monitoring: {
+      enabled: process.env.JOB_MONITORING_ENABLED !== 'false', // Default enabled
+      schedule: process.env.JOB_MONITORING_SCHEDULE || '*/15 * * * *' // Every 15 minutes
+    },
+    healthCheck: {
+      enabled: process.env.JOB_HEALTH_CHECK_ENABLED !== 'false', // Default enabled
+      schedule: process.env.JOB_HEALTH_CHECK_SCHEDULE || '0 */6 * * *' // Every 6 hours
+    },
+    timezone: process.env.JOB_TIMEZONE || 'UTC'
+  },
+
+  // Storage Limits
+  storage: {
+    maxTotalSize: parseInt(process.env.STORAGE_MAX_TOTAL_SIZE) || 1000 * 1024 * 1024, // 1GB
+    maxTotalFiles: parseInt(process.env.STORAGE_MAX_TOTAL_FILES) || 10000
+  },
+
   // Logging
   logging: {
     level: process.env.LOG_LEVEL || 'info',

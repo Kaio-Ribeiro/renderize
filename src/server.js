@@ -9,6 +9,7 @@ const path = require('path');
 // Import configuration
 const config = require('./config');
 const logger = require('./utils/logger');
+const jobScheduler = require('./services/jobScheduler');
 
 // Import routes and middleware
 const apiRoutes = require('./routes');
@@ -52,10 +53,12 @@ app.use('/public', express.static(path.join(__dirname, '../public')));
 // Import routes
 const authRoutes = require('./routes/auth');
 const storageRoutes = require('./routes/storage');
+const jobRoutes = require('./routes/jobs');
 
 // Mount routes
 app.use('/auth', authRoutes);
 app.use('/v1/storage', storageRoutes);
+app.use('/v1/jobs', jobRoutes);
 
 // Basic route for testing
 app.get('/', (req, res) => {
@@ -102,6 +105,14 @@ if (process.env.NODE_ENV !== 'test') {
     logger.info(`🚀 Renderize API running on port ${PORT}`);
     logger.info(`📚 API Documentation: http://localhost:${PORT}`);
     logger.info(`❤️  Health Check: http://localhost:${PORT}/health`);
+    
+    // Start job scheduler after server is running
+    try {
+      jobScheduler.start();
+      logger.info('🕐 Job scheduler started');
+    } catch (error) {
+      logger.error('Failed to start job scheduler:', error);
+    }
   });
 }
 
@@ -109,6 +120,15 @@ if (process.env.NODE_ENV !== 'test') {
 if (server) {
   process.on('SIGTERM', () => {
     logger.info('SIGTERM received, shutting down gracefully');
+    
+    // Stop job scheduler first
+    try {
+      jobScheduler.stop();
+      logger.info('Job scheduler stopped');
+    } catch (error) {
+      logger.error('Error stopping job scheduler:', error);
+    }
+    
     server.close(() => {
       logger.info('Server closed');
       process.exit(0);
@@ -117,6 +137,15 @@ if (server) {
 
   process.on('SIGINT', () => {
     logger.info('SIGINT received, shutting down gracefully');
+    
+    // Stop job scheduler first
+    try {
+      jobScheduler.stop();
+      logger.info('Job scheduler stopped');
+    } catch (error) {
+      logger.error('Error stopping job scheduler:', error);
+    }
+    
     server.close(() => {
       logger.info('Server closed');
       process.exit(0);
