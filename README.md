@@ -93,13 +93,31 @@ curl -H "Authorization: Basic <base64_credentials>" http://localhost:3000/auth/t
 - `POST /v1/image` - Convert HTML to image (not implemented yet)
 - `GET /v1/image/info` - Image conversion endpoint information
 
+## Screenshots & Browser
+
+The service uses **Playwright** with Chromium for reliable screenshot capture:
+
+- Element-specific screenshots using CSS selectors
+- Full page screenshots
+- Configurable viewport and quality
+- Automatic retry and error handling
+- Browser resource management
+
+### Browser Setup
+
+```bash
+# Install browser dependencies (after npm install)
+npx playwright install chromium
+```
+
 ## Development Status
 
 ✅ Project structure created  
 ✅ Authentication middleware  
 ✅ API routes and error handling  
+✅ Playwright screenshot service  
 ⏳ Image conversion endpoint  
-⏳ Playwright integration  
+⏳ File management system  
 
 ---
 

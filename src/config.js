@@ -36,7 +36,9 @@ module.exports = {
       width: parseInt(process.env.BROWSER_VIEWPORT_WIDTH) || 1920,
       height: parseInt(process.env.BROWSER_VIEWPORT_HEIGHT) || 1080
     },
-    userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
+    userAgent: process.env.BROWSER_USER_AGENT || 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
+    waitForAnimations: process.env.BROWSER_WAIT_ANIMATIONS !== 'false',
+    defaultQuality: parseInt(process.env.BROWSER_DEFAULT_QUALITY) || 90
   },
 
   // Security
