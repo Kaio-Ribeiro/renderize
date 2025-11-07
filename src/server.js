@@ -31,6 +31,12 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use('/images', express.static(path.join(__dirname, '../temp')));
 app.use('/public', express.static(path.join(__dirname, '../public')));
 
+// Import routes
+const authRoutes = require('./routes/auth');
+
+// Mount routes
+app.use('/auth', authRoutes);
+
 // Basic route for testing
 app.get('/', (req, res) => {
   res.json({

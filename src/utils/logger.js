@@ -7,6 +7,7 @@ const config = require('../config');
 class Logger {
   constructor() {
     this.levels = {
+      silent: -1,
       error: 0,
       warn: 1,
       info: 2,

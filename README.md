@@ -51,13 +51,39 @@ HCTI_API_KEY=your_api_key
 
 ## API Endpoints
 
+### Public Endpoints
 - `GET /` - API information
 - `GET /health` - Health check
+- `POST /auth/generate` - Generate sample credentials
+- `GET /auth/config` - Check authentication configuration
+- `GET /auth/status` - Check current auth status
+
+### Protected Endpoints (require Basic Auth)
+- `GET /auth/test` - Test authentication
+
+## Authentication
+
+The API uses HTTP Basic Authentication. Configure credentials in your `.env` file:
+
+```env
+HCTI_USER_ID=your_username
+HCTI_API_KEY=your_password
+```
+
+### Test Authentication
+
+```bash
+# Generate sample credentials
+curl -X POST http://localhost:3000/auth/generate
+
+# Test with credentials
+curl -H "Authorization: Basic <base64_credentials>" http://localhost:3000/auth/test
+```
 
 ## Development Status
 
 ✅ Project structure created  
-⏳ Authentication middleware  
+✅ Authentication middleware  
 ⏳ Image conversion endpoint  
 ⏳ Playwright integration  
 
