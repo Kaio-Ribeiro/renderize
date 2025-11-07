@@ -242,6 +242,191 @@ function generateImageUrl(filename, baseUrl = null) {
   return `${base}/images/${filename}`;
 }
 
+/**
+ * Copy image to different directory
+ */
+async function copyImage(sourceFilename, targetFilename, targetDir = null) {
+  try {
+    const sourceDir = config.image.tempDir;
+    const destDir = targetDir || config.image.tempDir;
+    
+    const sourcePath = path.join(sourceDir, sourceFilename);
+    const targetPath = path.join(destDir, targetFilename);
+    
+    // Ensure target directory exists
+    await ensureDirectory(destDir);
+    
+    // Copy file
+    await fs.copyFile(sourcePath, targetPath);
+    
+    // Get target file stats
+    const stats = await fs.stat(targetPath);
+    
+    logger.info('Image copied successfully', {
+      sourceFilename,
+      targetFilename,
+      targetDir: destDir,
+      size: stats.size
+    });
+    
+    return {
+      filename: targetFilename,
+      size: stats.size,
+      created: stats.birthtime,
+      path: targetPath
+    };
+    
+  } catch (error) {
+    logger.error('Failed to copy image', {
+      sourceFilename,
+      targetFilename,
+      error: error.message
+    });
+    throw new Error(`Failed to copy image: ${error.message}`);
+  }
+}
+
+/**
+ * Move image to different directory
+ */
+async function moveImage(sourceFilename, targetFilename, targetDir = null) {
+  try {
+    const sourceDir = config.image.tempDir;
+    const destDir = targetDir || config.image.tempDir;
+    
+    const sourcePath = path.join(sourceDir, sourceFilename);
+    const targetPath = path.join(destDir, targetFilename);
+    
+    // Ensure target directory exists
+    await ensureDirectory(destDir);
+    
+    // Move file (rename)
+    await fs.rename(sourcePath, targetPath);
+    
+    // Get target file stats
+    const stats = await fs.stat(targetPath);
+    
+    logger.info('Image moved successfully', {
+      sourceFilename,
+      targetFilename,
+      targetDir: destDir,
+      size: stats.size
+    });
+    
+    return {
+      filename: targetFilename,
+      size: stats.size,
+      created: stats.birthtime,
+      path: targetPath
+    };
+    
+  } catch (error) {
+    logger.error('Failed to move image', {
+      sourceFilename,
+      targetFilename,
+      error: error.message
+    });
+    throw new Error(`Failed to move image: ${error.message}`);
+  }
+}
+
+/**
+ * Get storage statistics
+ */
+async function getStorageStats(includeDetails = false) {
+  try {
+    const tempDir = config.image.tempDir;
+    const directoryStats = await getDirectoryStats(tempDir);
+    
+    const stats = {
+      directory: tempDir,
+      totalImages: directoryStats.totalImages,
+      totalSize: directoryStats.totalSize,
+      totalSizeMB: directoryStats.totalSizeMB,
+      freeSpace: null, // Will be populated if available
+      usedSpace: directoryStats.totalSize,
+      lastUpdate: new Date().toISOString()
+    };
+    
+    // Try to get disk space info (may not work on all systems)
+    try {
+      const fsStats = await fs.stat(tempDir);
+      // Note: Getting actual disk space requires additional libraries
+      // For now, we'll just track our own usage
+    } catch (error) {
+      // Ignore disk space errors
+    }
+    
+    if (includeDetails) {
+      const images = await listImages(tempDir);
+      stats.images = images.map(img => ({
+        filename: img.filename,
+        size: img.size,
+        created: img.created,
+        age: Date.now() - img.created.getTime()
+      }));
+    }
+    
+    return stats;
+    
+  } catch (error) {
+    logger.error('Failed to get storage stats', { error: error.message });
+    throw new Error(`Failed to get storage stats: ${error.message}`);
+  }
+}
+
+/**
+ * Validate image file
+ */
+async function validateImage(filename) {
+  try {
+    const tempDir = config.image.tempDir;
+    const filepath = path.join(tempDir, filename);
+    
+    // Check if file exists
+    const exists = await imageExists(filename);
+    if (!exists) {
+      return { valid: false, reason: 'File does not exist' };
+    }
+    
+    // Check file extension
+    if (!filename.toLowerCase().endsWith('.png')) {
+      return { valid: false, reason: 'Invalid file extension' };
+    }
+    
+    // Check filename format
+    if (!filename.match(/^[a-zA-Z0-9\-_]+\.png$/)) {
+      return { valid: false, reason: 'Invalid filename format' };
+    }
+    
+    // Check file size
+    const stats = await fs.stat(filepath);
+    const maxSize = config.image.maxSize || 10 * 1024 * 1024; // 10MB default
+    
+    if (stats.size > maxSize) {
+      return { valid: false, reason: 'File too large' };
+    }
+    
+    if (stats.size === 0) {
+      return { valid: false, reason: 'Empty file' };
+    }
+    
+    // Basic PNG header check
+    const buffer = await fs.readFile(filepath, { start: 0, end: 7 });
+    const pngSignature = Buffer.from([0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A]);
+    
+    if (!buffer.equals(pngSignature)) {
+      return { valid: false, reason: 'Invalid PNG signature' };
+    }
+    
+    return { valid: true, size: stats.size, created: stats.birthtime };
+    
+  } catch (error) {
+    logger.error('Failed to validate image', { filename, error: error.message });
+    return { valid: false, reason: error.message };
+  }
+}
+
 module.exports = {
   generateFilename,
   saveImage,
@@ -252,5 +437,9 @@ module.exports = {
   cleanOldImages,
   ensureDirectory,
   getDirectoryStats,
-  generateImageUrl
+  generateImageUrl,
+  copyImage,
+  moveImage,
+  getStorageStats,
+  validateImage
 };

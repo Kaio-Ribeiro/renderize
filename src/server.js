@@ -20,6 +20,7 @@ const {
   notFoundHandler,
   requestLogger 
 } = require('./middleware/common');
+const { createStaticMiddleware } = require('./middleware/static');
 
 // Initialize Express app
 const app = express();
@@ -44,15 +45,17 @@ app.use(requestLogger);
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
-// Static files - serve temporary images
-app.use('/images', express.static(path.join(__dirname, '../temp')));
+// Enhanced static file serving
+app.use(createStaticMiddleware());
 app.use('/public', express.static(path.join(__dirname, '../public')));
 
 // Import routes
 const authRoutes = require('./routes/auth');
+const storageRoutes = require('./routes/storage');
 
 // Mount routes
 app.use('/auth', authRoutes);
+app.use('/v1/storage', storageRoutes);
 
 // Basic route for testing
 app.get('/', (req, res) => {
