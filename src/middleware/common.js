@@ -184,8 +184,12 @@ function notFoundHandler(req, res) {
  */
 function requestLogger(req, res, next) {
   const oldSend = res.send;
+  let sent = false;
   
   res.send = function(data) {
+    if (sent) return;
+    sent = true;
+    
     const duration = req.startTime ? Date.now() - req.startTime : 0;
     
     logger.info('Request completed', {

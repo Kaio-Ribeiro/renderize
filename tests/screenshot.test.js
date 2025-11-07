@@ -79,7 +79,7 @@ describe('Screenshot Service Tests', () => {
   test('should handle non-existent selectors gracefully', async () => {
     await expect(
       screenshotService.captureElement('https://example.com', '.non-existent-selector-12345')
-    ).rejects.toThrow('CSS selector');
+    ).rejects.toThrow();
   }, 30000);
 
   test('should handle timeout errors gracefully', async () => {

@@ -80,6 +80,50 @@ curl -X POST http://localhost:3000/auth/generate
 curl -H "Authorization: Basic <base64_credentials>" http://localhost:3000/auth/test
 ```
 
+## Usage Examples
+
+### Convert HTML Element to Image
+
+```bash
+curl -X POST http://localhost:3000/v1/image \
+  -H "Authorization: Basic <your_credentials>" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "url": "https://example.com",
+    "selector": "h1"
+  }'
+```
+
+**Response:**
+```json
+{
+  "url": "http://localhost:3000/images/screenshot-abc123-1699123456789.png",
+  "filename": "screenshot-abc123-1699123456789.png",
+  "size": 15420,
+  "created": "2024-11-07T12:30:56.789Z",
+  "requestId": "req_abc123",
+  "duration": "2340ms"
+}
+```
+
+### Check URL Accessibility
+
+```bash
+curl -X POST http://localhost:3000/v1/image/check \
+  -H "Authorization: Basic <your_credentials>" \
+  -H "Content-Type: application/json" \
+  -d '{"url": "https://example.com", "selector": "body"}'
+```
+
+### Capture Full Page
+
+```bash
+curl -X POST http://localhost:3000/v1/image/full-page \
+  -H "Authorization: Basic <your_credentials>" \
+  -H "Content-Type: application/json" \
+  -d '{"url": "https://example.com", "selector": "body"}'
+```
+
 ## API Endpoints
 
 ### Public Routes
@@ -90,7 +134,10 @@ curl -H "Authorization: Basic <base64_credentials>" http://localhost:3000/auth/t
 - `GET /v1/auth/*` - Authentication endpoints
 
 ### Protected Routes (require Basic Auth)
-- `POST /v1/image` - Convert HTML to image (not implemented yet)
+- `POST /v1/image` - Convert HTML element to PNG image
+- `POST /v1/image/full-page` - Capture full page screenshot
+- `POST /v1/image/check` - Check URL accessibility
+- `POST /v1/image/page-info` - Get page information
 - `GET /v1/image/info` - Image conversion endpoint information
 
 ## Screenshots & Browser
@@ -116,8 +163,10 @@ npx playwright install chromium
 ✅ Authentication middleware  
 ✅ API routes and error handling  
 ✅ Playwright screenshot service  
-⏳ Image conversion endpoint  
-⏳ File management system  
+✅ Image conversion endpoint (`/v1/image`)  
+✅ File management system  
+⏳ Automated cleanup system  
+⏳ Docker configuration  
 
 ---
 
