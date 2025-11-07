@@ -8,9 +8,10 @@ const jobScheduler = require('../services/jobScheduler');
 const router = express.Router();
 
 // Custom validation middleware for jobs endpoints
-const validateJobRequest = createValidator((req) => {
-  return { valid: true };
-});
+const validateJobRequest = (req, res, next) => {
+  // Simple validation middleware that just passes through
+  next();
+};
 
 // Apply authentication to all job routes
 router.use(basicAuth);

@@ -109,8 +109,8 @@ async function getImageInfo(filename) {
       filename,
       filepath,
       size: stats.size,
-      created: stats.birthtime,
-      modified: stats.mtime,
+      created: new Date(stats.birthtime),
+      modified: new Date(stats.mtime),
       exists: true
     };
     

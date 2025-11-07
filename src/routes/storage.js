@@ -5,10 +5,11 @@ const { createValidator } = require('../utils/validation');
 const logger = require('../utils/logger');
 
 // Custom validation middleware for storage endpoints
-const validateStorageRequest = createValidator((req) => {
-  // Basic validation - specific validations are done in express-validator chains
-  return { valid: true };
-});
+const validateStorageRequest = (req, res, next) => {
+  // Simple validation middleware that just passes through
+  // Specific validation is handled by express-validator chains
+  next();
+};
 const {
   getStorageStats,
   cleanOldImages,
