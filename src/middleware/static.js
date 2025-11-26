@@ -3,6 +3,7 @@ const path = require('path');
 const fs = require('fs').promises;
 const logger = require('../utils/logger');
 const { getImageInfo } = require('../utils/fileManager');
+const config = require('../config');
 
 /**
  * Static file server middleware with enhanced features
@@ -63,9 +64,10 @@ function createStaticMiddleware() {
         userAgent: req.get('User-Agent')
       });
       
-      // Stream the file
-      const filePath = path.join(process.cwd(), 'images', filename);
-      res.sendFile(filePath);
+      // Stream the file from configured temp directory
+      // Use absolute path to ensure sendFile resolves correctly
+      const filePath = imageInfo.filepath || path.resolve(process.cwd(), config.image.tempDir, filename);
+      res.sendFile(path.resolve(filePath));
       
     } catch (error) {
       logger.error('Error serving static image', {
@@ -149,7 +151,7 @@ function createStaticMiddleware() {
     }
     
     try {
-      const imagesDir = path.join(process.cwd(), 'images');
+      const imagesDir = path.resolve(process.cwd(), config.image.tempDir);
       
       // Ensure directory exists
       try {
