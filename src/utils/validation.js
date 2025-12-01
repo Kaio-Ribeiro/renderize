@@ -11,14 +11,17 @@ function validateUrl(url) {
   }
 
   try {
-    const parsedUrl = new URL(url);
+    // Remove extra slashes at the end before parsing
+    const cleanUrl = url.trim().replace(/\/+$/, '');
+    const parsedUrl = new URL(cleanUrl);
     
     // Only allow HTTP and HTTPS protocols
     if (!['http:', 'https:'].includes(parsedUrl.protocol)) {
       throw new ValidationError('URL must use HTTP or HTTPS protocol');
     }
     
-    return parsedUrl.href;
+    // Return the cleaned URL without extra trailing slashes
+    return parsedUrl.href.replace(/\/+$/, '');
   } catch (error) {
     throw new ValidationError('Invalid URL format');
   }

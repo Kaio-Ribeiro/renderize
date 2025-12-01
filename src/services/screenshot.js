@@ -73,11 +73,23 @@ class ScreenshotService {
       page.setDefaultTimeout(config.browser.timeout);
 
       // Navigate to URL
-      logger.debug('Navigating to URL', { url });
-      await page.goto(url, { 
-        waitUntil: 'networkidle',
-        timeout: config.browser.timeout 
-      });
+      logger.debug('Navigating to URL', { url, timeout: config.browser.timeout });
+      try {
+        await page.goto(url, { 
+          waitUntil: 'domcontentloaded',
+          timeout: config.browser.timeout 
+        });
+        
+        // Wait a bit more for dynamic content to load
+        await page.waitForTimeout(2000);
+      } catch (navigateError) {
+        logger.error('Navigation failed', {
+          url,
+          error: navigateError.message,
+          timeout: config.browser.timeout
+        });
+        throw navigateError;
+      }
 
       // Wait for element to be visible
       logger.debug('Waiting for element', { selector });
@@ -210,11 +222,14 @@ class ScreenshotService {
     let page = null;
 
     try {
+      logger.debug('Checking URL accessibility', { url, normalizedUrl: url });
+      
       context = await this.browser.newContext();
       page = await context.newPage();
+      page.setDefaultTimeout(config.browser.timeout);
       
       const response = await page.goto(url, { 
-        timeout: 10000,
+        timeout: config.browser.timeout,
         waitUntil: 'domcontentloaded'
       });
 
@@ -226,9 +241,16 @@ class ScreenshotService {
       };
 
     } catch (error) {
+      logger.warn('URL accessibility check failed', {
+        url,
+        error: error.message,
+        timeout: config.browser.timeout
+      });
+      
       return {
         accessible: false,
-        error: error.message
+        error: error.message,
+        timeout: config.browser.timeout
       };
 
     } finally {
