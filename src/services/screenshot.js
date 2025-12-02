@@ -79,9 +79,6 @@ class ScreenshotService {
           waitUntil: 'domcontentloaded',
           timeout: config.browser.timeout 
         });
-        
-        // Wait a bit more for dynamic content to load
-        await page.waitForTimeout(2000);
       } catch (navigateError) {
         logger.error('Navigation failed', {
           url,
@@ -91,16 +88,28 @@ class ScreenshotService {
         throw navigateError;
       }
 
-      // Wait for element to be visible
+      // Wait for element with intelligent timeout strategy
       logger.debug('Waiting for element', { selector });
-      await page.waitForSelector(selector, { 
-        state: 'visible',
-        timeout: config.browser.timeout 
-      });
+      
+      try {
+        // Try to find element quickly first (5 seconds)
+        await page.waitForSelector(selector, { 
+          state: 'visible',
+          timeout: 5000 
+        });
+      } catch (quickError) {
+        // If not found quickly, wait for network to settle and try again
+        logger.debug('Element not immediately visible, waiting for network idle');
+        await page.waitForLoadState('networkidle', { timeout: 10000 });
+        await page.waitForSelector(selector, { 
+          state: 'visible',
+          timeout: config.browser.timeout - 15000 // Reserve time for other operations
+        });
+      }
 
-      // Additional wait for any animations/transitions
+      // Short wait for animations only if needed
       if (options.waitForAnimations !== false) {
-        await page.waitForTimeout(1000);
+        await page.waitForTimeout(300);
       }
 
       // Capture screenshot of specific element

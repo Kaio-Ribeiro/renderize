@@ -25,21 +25,7 @@ router.post('/', validateImageRequest, async (req, res) => {
       ip: req.ip
     });
 
-    // Step 1: Check if URL is accessible
-    logger.debug('Checking URL accessibility', { requestId, url });
-    const urlCheck = await screenshotService.checkUrl(url);
-    
-    if (!urlCheck.accessible) {
-      logger.warn('URL not accessible', { requestId, url, error: urlCheck.error });
-      return res.status(400).json({
-        status: 'error',
-        message: 'URL is not accessible',
-        details: urlCheck.error,
-        requestId
-      });
-    }
-
-    // Step 2: Capture screenshot
+    // Capture screenshot directly - error handling is done within the service
     logger.debug('Capturing screenshot', { requestId, url, selector });
     const imageBuffer = await screenshotService.captureElement(url, selector, {
       waitForAnimations: true

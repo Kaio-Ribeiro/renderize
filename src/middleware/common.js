@@ -22,7 +22,7 @@ function validateRequest(req, res, next) {
 /**
  * Request timeout middleware
  */
-function requestTimeout(timeout = 30000) {
+function requestTimeout(timeout = 45000) {
   return (req, res, next) => {
     res.setTimeout(timeout, () => {
       logger.warn('Request timeout', {

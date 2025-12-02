@@ -30,7 +30,7 @@ module.exports = {
 
   // Browser Configuration
   browser: {
-    timeout: parseInt(process.env.BROWSER_TIMEOUT) || 30000,
+    timeout: parseInt(process.env.BROWSER_TIMEOUT) || 45000,
     headless: process.env.BROWSER_HEADLESS !== 'false',
     viewport: {
       width: parseInt(process.env.BROWSER_VIEWPORT_WIDTH) || 1920,
